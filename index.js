@@ -46,15 +46,12 @@ async function getLocation(){
 	});
 	return [pos.coords.latitude, pos.coords.longitude]
 }
-//let locationArray = getLocation()
-//console.log(getLocation())
-//console.log(lat,lon)
-
 
 
 async function render() {
     let locationArray = await getLocation()
     console.log(getLocation())
+    /*
     var map = L.map('map').setView([locationArray[0], locationArray[1]], 13);
     
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -63,34 +60,64 @@ async function render() {
     }).addTo(map);
     var marker = L.marker([locationArray[0], locationArray[1]]).addTo(map);
     marker.bindTooltip("You are here",{permanent:true})
+    */
     return locationArray
 }
 
-//let userLocation = render()
 
-async function foursquarePull(lat,lon) {
+
+async function foursquarePull(lat,lon,busType) {
     const options = {method: 'GET', headers: {accept: 'application/json', Authorization: 'fsq3ATzZbmcGhdeFafr73wZcnJ+LlN6bK+4dh19a7ClS4u8='}};
 
-    let businessData = await fetch(`https://api.foursquare.com/v3/places/search?query=coffee&ll=${lat}%2C${lon}&radius=2000&limit=5`, options)
-      .then(response => response.json())
-      .then(response => console.log(response))
+    let businessData = await fetch(`https://api.foursquare.com/v3/places/search?query=${busType}&ll=${lat}%2C${lon}&radius=2000&limit=5`, options)
+      //.then(response => response.json())
+      //.then(response => console.log(response))
       .catch(err => console.error(err));
-    return businessData
+    let data = await businessData.text()
+    console.log("data:",data)
+	let parsedData = JSON.parse(data)
+    console.log("parsedData:",parsedData)
+    let businesses = parsedData.results
+    console.log("businesses:",businesses)
+    return businesses
 }
 
-//console.log(foursquarePull())
 
 
-async function master () {
+
+async function master (userBusinessSelection) {
     let userLocation = await render()
-    await console.log("at this point the userlocation should be there")
-    await console.log(userLocation)
-    await console.log(userLocation[0],userLocation[1])
-    let businesses = await foursquarePull(userLocation[0],userLocation[1]).results
-    setTimeout(console.log(businesses[0].fsq_id),20000)
+    var map = L.map('map').setView([userLocation[0], userLocation[1]], 13);
+    
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    var marker = L.marker([userLocation[0], userLocation[1]]).addTo(map);
+    marker.bindTooltip("You are here",{permanent:true})
+    //await console.log("at this point the userlocation should be there")
+    //await console.log(userLocation)
+    //await console.log(userLocation[0],userLocation[1])
+    let businesses = await foursquarePull(userLocation[0],userLocation[1],userBusinessSelection)//.results
+    //console.log(businesses[0].fsq_id)
+    businesses.forEach((business) => {
+        var marker = L.marker([business.geocodes.main.latitude, business.geocodes.main.longitude]).addTo(map);
+        marker.bindTooltip(business.name,{permanent:true})
+        console.log(business.name)
+        console.log(business.geocodes.main.latitude,business.geocodes.main.longitude)
+    })
     //console.log(businesses.fsq_id)
 }
-master()
+
+
+
+button.addEventListener('click', ()=> {
+    let userSelection = document.querySelector("#businessType").value
+    console.log(userSelection)
+    master(userSelection)
+})
+
+//console.log(foursquarePull())
 
 //var map = L.map('map').setView([locationArray[0], locationArray[1]], 13);
 /*var map = L.map('map', {
