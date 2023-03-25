@@ -85,7 +85,7 @@ async function foursquarePull(lat,lon,busType) {
 
 
 
-async function master (userBusinessSelection) {
+async function master () {
     let userLocation = await render()
     var map = L.map('map').setView([userLocation[0], userLocation[1]], 13);
     
@@ -98,6 +98,13 @@ async function master (userBusinessSelection) {
     //await console.log("at this point the userlocation should be there")
     //await console.log(userLocation)
     //await console.log(userLocation[0],userLocation[1])
+    
+    //console.log(businesses.fsq_id)
+    return {userLocation,map}
+}
+
+
+async function searchForBusinesses(userBusinessSelection, userLocation,map) {
     let businesses = await foursquarePull(userLocation[0],userLocation[1],userBusinessSelection)//.results
     //console.log(businesses[0].fsq_id)
     businesses.forEach((business) => {
@@ -106,16 +113,18 @@ async function master (userBusinessSelection) {
         console.log(business.name)
         console.log(business.geocodes.main.latitude,business.geocodes.main.longitude)
     })
-    //console.log(businesses.fsq_id)
 }
 
+async function main() {
+    let {userLocation,map} = await master()
+    button.addEventListener('click', ()=> {
+        let userSelection = document.querySelector("#businessType").value
+        console.log(userSelection,userLocation)
+        searchForBusinesses(userSelection, userLocation,map)
+    })
+}
+main()
 
-
-button.addEventListener('click', ()=> {
-    let userSelection = document.querySelector("#businessType").value
-    console.log(userSelection)
-    master(userSelection)
-})
 
 //console.log(foursquarePull())
 
